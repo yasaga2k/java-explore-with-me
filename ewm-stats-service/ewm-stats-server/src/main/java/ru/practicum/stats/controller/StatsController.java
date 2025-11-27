@@ -14,7 +14,6 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 public class StatsController {
-
     private final StatsService statsService;
 
     @PostMapping("/hit")
