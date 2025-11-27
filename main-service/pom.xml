@@ -53,7 +53,7 @@
 
         <dependency>
             <groupId>ru.practicum</groupId>
-            <artifactId>stats-client</artifactId>
+            <artifactId>ewm-stats-client</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
 
