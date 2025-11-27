@@ -35,3 +35,37 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  # основной сервис
+  ewm-service:
+    build: ./main-service
+    container_name: ewm-service
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://ewm-db:5432/ewm
+      - SPRING_DATASOURCE_USERNAME=ewm_user
+      - SPRING_DATASOURCE_PASSWORD=12345
+    depends_on:
+      ewm-db:
+        condition: service_healthy
+      stats-server:
+        condition: service_healthy
+
+  # база основного сервиса
+  ewm-db:
+    image: postgres:16.1
+    container_name: ewm-db
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_DB=ewm
+      - POSTGRES_USER=ewm_user
+      - POSTGRES_PASSWORD=12345
+    volumes:
+      - ./ewm_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -q -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
