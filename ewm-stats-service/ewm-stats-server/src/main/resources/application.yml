@@ -1,0 +1,51 @@
+server:
+  port: 9090
+
+spring:
+  main:
+    banner-mode: off
+
+  sql:
+    init:
+      mode: always
+      platform: postgres
+
+  jpa:
+    defer-datasource-initialization: true
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: UTC
+
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/stats
+    username: stats_user
+    password: "12345"
+    hikari:
+      connection-timeout: 30000
+      maximum-pool-size: 10
+
+logging:
+  level:
+    org:
+      hibernate:
+        SQL: DEBUG
+      springframework:
+        web: DEBUG
+        jdbc: DEBUG
+    ru:
+      practicum: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
