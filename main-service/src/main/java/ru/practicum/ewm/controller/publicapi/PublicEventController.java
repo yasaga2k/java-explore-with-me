@@ -37,20 +37,31 @@ public class PublicEventController {
             @RequestParam(defaultValue = "10") int size,
             HttpServletRequest request) {
 
-        log.info("Получен публичный запрос на получение событий с фильтрами: text={}, categories={}, paid={}, rangeStart={}, rangeEnd={}, onlyAvailable={}, sort={}, from={}, size={}",
-                text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size);
+        log.info("Получен публичный запрос на получение событий, from={}, size={}", from, size);
+
+        String ip = request.getHeader("X-Forwarded-For");
+        if (ip == null || ip.isBlank()) {
+            ip = request.getRemoteAddr();
+        }
 
         return eventService.getEvents(
                 text, categories, paid, rangeStart, rangeEnd,
                 onlyAvailable, sort, from, size,
-                request.getRequestURI(), request.getRemoteAddr()
+                request.getRequestURI(), ip
         );
     }
 
     @GetMapping("/events/{id}")
     @Operation(summary = "Получение подробной информации об опубликованном событии по его идентификатору")
     public EventFullDto getEvent(@PathVariable Long id, HttpServletRequest request) {
+
         log.info("Получен публичный запрос на получение события с id={}", id);
-        return eventService.getEvent(id, request.getRequestURI(), request.getRemoteAddr());
+
+        String ip = request.getHeader("X-Forwarded-For");
+        if (ip == null || ip.isBlank()) {
+            ip = request.getRemoteAddr();
+        }
+
+        return eventService.getEvent(id, request.getRequestURI(), ip);
     }
 }
