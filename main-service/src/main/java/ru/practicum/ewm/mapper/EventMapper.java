@@ -19,7 +19,8 @@ public interface EventMapper {
     @Mapping(target = "initiator", ignore = true)
     Event toEvent(NewEventDto newEventDto);
 
-    @Mapping(target = "location", source = "location")
+    @Mapping(target = "confirmedRequests", ignore = true)
+    @Mapping(target = "views", ignore = true)
     EventFullDto toEventFullDto(Event event);
 
     @Named("toEventShortDto")

@@ -18,6 +18,7 @@ import ru.practicum.ewm.model.*;
 import ru.practicum.ewm.model.Location;
 import ru.practicum.ewm.repository.CategoryRepository;
 import ru.practicum.ewm.repository.EventRepository;
+import ru.practicum.ewm.repository.ParticipationRequestRepository;
 import ru.practicum.ewm.repository.UserRepository;
 import ru.practicum.ewm.service.EventService;
 import ru.practicum.stats.client.StatsClient;
@@ -44,6 +45,7 @@ public class EventServiceImpl implements EventService {
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final EventMapper eventMapper;
+    private final ParticipationRequestRepository requestRepository;
 
     @Override
     @Transactional
@@ -75,7 +77,7 @@ public class EventServiceImpl implements EventService {
 
         Event savedEvent = eventRepository.save(event);
         EventFullDto result = eventMapper.toEventFullDto(savedEvent);
-        result.setViews(0L); // При создании просмотров нет
+        result.setViews(0L);
         log.info("Added event: {}", result);
         return result;
     }
@@ -90,9 +92,12 @@ public class EventServiceImpl implements EventService {
         addHit(uri, ip);
 
         long views = getEventView(eventId);
+        long confirmed = getConfirmedRequests(eventId);
+
         EventFullDto result = eventMapper.toEventFullDto(event);
         result.setViews(views);
-        log.debug("Found public event: {}", result);
+        result.setConfirmedRequests(confirmed);
+
         return result;
     }
 
@@ -167,9 +172,12 @@ public class EventServiceImpl implements EventService {
                 .orElseThrow(() -> new NotFoundException(String.format("Event with id=%d was not found or does not belong to user %d", eventId, userId)));
 
         long views = getEventView(eventId);
+        long confirmed = getConfirmedRequests(eventId);
+
         EventFullDto result = eventMapper.toEventFullDto(event);
         result.setViews(views);
-        log.debug("Found event: {}", result);
+        result.setConfirmedRequests(confirmed);
+
         return result;
     }
 
@@ -188,6 +196,7 @@ public class EventServiceImpl implements EventService {
                 .map(event -> {
                     EventShortDto dto = eventMapper.toEventShortDto(event);
                     dto.setViews(viewsMap.getOrDefault(event.getId(), 0L));
+                    dto.setConfirmedRequests(getConfirmedRequests(event.getId()));
                     return dto;
                 })
                 .collect(Collectors.toList());
@@ -227,6 +236,7 @@ public class EventServiceImpl implements EventService {
                 .map(event -> {
                     EventFullDto dto = eventMapper.toEventFullDto(event);
                     dto.setViews(views.getOrDefault(event.getId(), 0L));
+                    dto.setConfirmedRequests(getConfirmedRequests(event.getId()));
                     return dto;
                 })
                 .collect(Collectors.toList());
@@ -444,6 +454,10 @@ public class EventServiceImpl implements EventService {
             log.warn("Failed to get stats for event {}: {}", eventId, e.getMessage());
             return 0L;
         }
+    }
+
+    private long getConfirmedRequests(long eventId) {
+        return requestRepository.countByEventIdAndStatus(eventId, RequestStatus.CONFIRMED);
     }
 
     private Map<Long, Long> getEventsView(List<Long> ids) {
