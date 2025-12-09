@@ -1,16 +1,20 @@
 package ru.practicum.stats.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.format.annotation.DateTimeFormat;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.stats.dto.EndpointHitDto;
 import ru.practicum.stats.dto.ViewStatsDto;
 import ru.practicum.stats.service.StatsService;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 public class StatsController {
@@ -24,10 +28,30 @@ public class StatsController {
 
     @GetMapping("/stats")
     public List<ViewStatsDto> getStats(
-            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime start,
-            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime end,
-            @RequestParam(required = false) List<String> uris,
-            @RequestParam(defaultValue = "false") boolean unique) {
-        return statsService.getStats(start, end, uris, unique);
+            @RequestParam
+            String start,
+            @RequestParam
+            String end,
+            @RequestParam(required = false)
+            List<String> uris,
+            @RequestParam(required = false, defaultValue = "false")
+            Boolean unique
+    ) {
+        log.info("Получен запрос на выгрузку статистики за период с {} по {}", start, end);
+        return statsService.getStats(parseDate(start), parseDate(end), uris, unique);
+    }
+
+    private LocalDateTime parseDate(String date) {
+        try {
+            String decoded = URLDecoder.decode(date, StandardCharsets.UTF_8).trim();
+
+            if (decoded.contains("T")) {
+                return LocalDateTime.parse(decoded, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+            } else {
+                return LocalDateTime.parse(decoded, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+            }
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Неверный формат даты");
+        }
     }
 }
