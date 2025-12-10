@@ -28,17 +28,23 @@ public class StatsController {
 
     @GetMapping("/stats")
     public List<ViewStatsDto> getStats(
-            @RequestParam
-            String start,
-            @RequestParam
-            String end,
+            @RequestParam(required = true) String start,
+            @RequestParam(required = true) String end,
             @RequestParam(required = false)
             List<String> uris,
             @RequestParam(required = false, defaultValue = "false")
             Boolean unique
     ) {
         log.info("Получен запрос на выгрузку статистики за период с {} по {}", start, end);
-        return statsService.getStats(parseDate(start), parseDate(end), uris, unique);
+
+        LocalDateTime startDate = parseDate(start);
+        LocalDateTime endDate = parseDate(end);
+
+        if (startDate.isAfter(endDate)) {
+            throw new IllegalArgumentException("Дата начала не может быть позже даты окончания");
+        }
+
+        return statsService.getStats(startDate, endDate, uris, unique);
     }
 
     private LocalDateTime parseDate(String date) {
