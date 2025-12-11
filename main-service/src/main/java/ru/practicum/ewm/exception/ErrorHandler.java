@@ -47,28 +47,26 @@ public class ErrorHandler {
                 .build();
     }
 
-    @ExceptionHandler
+    @ExceptionHandler({
+            BadRequestException.class,
+            ValidationException.class,
+            MissingServletRequestParameterException.class
+    })
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiError handleBadRequestException(final BadRequestException e) {
+    public ApiError handleBadRequestExceptions(final Exception e) {
         log.warn("BAD REQUEST: {}", e.getMessage());
 
-        return ApiError.builder()
-                .status("BAD_REQUEST")
-                .reason("Incorrectly made request.")
-                .message(e.getMessage())
-                .timestamp(LocalDateTime.now())
-                .build();
-    }
+        String message = e.getMessage();
 
-    @ExceptionHandler(ValidationException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiError handleValidationException(final ValidationException e) {
-        log.warn("VALIDATION FAILED: {}", e.getMessage());
+        if (e instanceof MissingServletRequestParameterException) {
+            MissingServletRequestParameterException ex = (MissingServletRequestParameterException) e;
+            message = "Required request parameter '" + ex.getParameterName() + "' is not present";
+        }
 
         return ApiError.builder()
-                .status("BAD_REQUEST")
+                .status(HttpStatus.BAD_REQUEST.name())
                 .reason("Incorrectly made request.")
-                .message(e.getMessage())
+                .message(message)
                 .timestamp(LocalDateTime.now())
                 .build();
     }
@@ -120,19 +118,6 @@ public class ErrorHandler {
                 .reason("An unexpected error occurred.")
                 .message("An internal server error occurred. Please try again later.")
                 .errors(List.of(e.getClass().getName()))
-                .timestamp(LocalDateTime.now())
-                .build();
-    }
-
-    @ExceptionHandler(MissingServletRequestParameterException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiError handleMissingServletRequestParameterException(final MissingServletRequestParameterException e) {
-        log.warn("MISSING PARAMETER: {}", e.getMessage());
-
-        return ApiError.builder()
-                .status("BAD_REQUEST")
-                .reason("Incorrectly made request.")
-                .message("Required request parameter '" + e.getParameterName() + "' is not present")
                 .timestamp(LocalDateTime.now())
                 .build();
     }
