@@ -1,0 +1,419 @@
+{
+  "info": {
+    "name": "EWM Comments Feature",
+    "_postman_id": "c1c79d8f-5139-4dfa-9c1e-15fae955e88d",
+    "description": "Postman tests for comments feature in ExploreWithMe.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Create Comment (valid)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8080/users/1/events/1/comments",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["users", "1", "events", "1", "comments"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"text\": \"Amazing event!\"}"
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 201\", function () {",
+              "    pm.expect(pm.response.code).to.eql(201);",
+              "});",
+              "",
+              "var json = pm.response.json();",
+              "",
+              "pm.test(\"Response has id\", function () {",
+              "    pm.expect(json).to.have.property(\"id\");",
+              "});",
+              "",
+              "pm.test(\"Response has eventId\", function () {",
+              "    pm.expect(json).to.have.property(\"event\");",
+              "});",
+              "",
+              "pm.test(\"Response has author\", function () {",
+              "    pm.expect(json).to.have.property(\"author\");",
+              "});",
+              "",
+              "pm.test(\"Response has text\", function () {",
+              "    pm.expect(json.text).to.eql(\"Amazing event!\");",
+              "});",
+              "",
+              "pm.test(\"Response has created_at field\", function () {",
+              "    pm.expect(json).to.have.property(\"created_at\");",
+              "});",
+              "",
+              "pm.collectionVariables.set(\"commentId\", json.id);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Comments for Event",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "http://localhost:8080/events/1/comments",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["events", "1", "comments"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", () => {",
+              "    pm.expect(pm.response.code).to.eql(200);",
+              "});",
+              "",
+              "var responseJson = pm.response.json();",
+              "pm.test(\"Body is array\", () => {",
+              "    pm.expect(responseJson).to.be.an(\"array\");",
+              "});",
+              "",
+              "pm.test(\"Array contains comments\", () => {",
+              "    if (responseJson.length > 0) {",
+              "        var comment = responseJson[0];",
+              "        pm.expect(comment).to.have.property(\"id\");",
+              "        pm.expect(comment).to.have.property(\"event\");",
+              "        pm.expect(comment).to.have.property(\"author\");",
+              "        pm.expect(comment).to.have.property(\"text\");",
+              "        pm.expect(comment).to.have.property(\"created_at\");",
+              "    }",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Validation: Empty Text",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8080/users/1/events/1/comments",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["users", "1", "events", "1", "comments"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"text\": \"\"}"
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 400\", function () {",
+              "    pm.expect(pm.response.code).to.eql(400);",
+              "});",
+              "",
+              "pm.test(\"Response has error message\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json).to.have.property(\"message\");",
+              "    pm.expect(json.message).to.include(\"cannot be blank\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Delete Comment (Admin)",
+      "request": {
+        "method": "DELETE",
+        "url": {
+          "raw": "http://localhost:8080/admin/comments/{{commentId}}",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["admin", "comments", "{{commentId}}"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Deleted successfully - Status 204\", () => {",
+              "    pm.expect(pm.response.code).to.eql(204);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Verify Comment Deleted",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "http://localhost:8080/events/1/comments",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["events", "1", "comments"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "var arr = pm.response.json();",
+              "var deletedId = pm.collectionVariables.get(\"commentId\");",
+              "",
+              "pm.test(\"Deleted comment is not in list\", function () {",
+              "    var found = false;",
+              "    for (var i = 0; i < arr.length; i++) {",
+              "        if (arr[i].id === Number(deletedId)) {",
+              "            found = true;",
+              "            break;",
+              "        }",
+              "    }",
+              "    pm.expect(found).to.be.false;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Error: Comment Not Found (Delete)",
+      "request": {
+        "method": "DELETE",
+        "url": {
+          "raw": "http://localhost:8080/admin/comments/999999",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["admin", "comments", "999999"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Comment not found\", () => {",
+              "    pm.expect(pm.response.code).to.eql(404);",
+              "});",
+              "",
+              "pm.test(\"Response has error message\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json).to.have.property(\"message\");",
+              "    pm.expect(json.message).to.include(\"not found\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Error: User Not Found",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8080/users/9999/events/1/comments",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["users", "9999", "events", "1", "comments"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"text\": \"test\"}"
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"User not found - Status 404\", () => {",
+              "    pm.expect(pm.response.code).to.eql(404);",
+              "});",
+              "",
+              "pm.test(\"Response has error message\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json).to.have.property(\"message\");",
+              "    pm.expect(json.message).to.include(\"User\");",
+              "    pm.expect(json.message).to.include(\"not found\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Error: Event Not Found",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8080/users/1/events/9999/comments",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["users", "1", "events", "9999", "comments"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"text\": \"test\"}"
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Event not found - Status 404\", () => {",
+              "    pm.expect(pm.response.code).to.eql(404);",
+              "});",
+              "",
+              "pm.test(\"Response has error message\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json).to.have.property(\"message\");",
+              "    pm.expect(json.message).to.include(\"Event\");",
+              "    pm.expect(json.message).to.include(\"not found\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Error: Unpublished Event",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8080/users/1/events/2/comments",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["users", "1", "events", "2", "comments"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"text\": \"Comment for unpublished event\"}"
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Cannot comment unpublished event - Status 409\", () => {",
+              "    pm.expect(pm.response.code).to.eql(409);",
+              "});",
+              "",
+              "pm.test(\"Response has conflict message\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json).to.have.property(\"message\");",
+              "    pm.expect(json.message).to.include(\"unpublished\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Comments for Non-existent Event",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "http://localhost:8080/events/9999/comments",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["events", "9999", "comments"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Event not found - Status 404\", () => {",
+              "    pm.expect(pm.response.code).to.eql(404);",
+              "});",
+              "",
+              "pm.test(\"Response has error message\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json).to.have.property(\"message\");",
+              "    pm.expect(json.message).to.include(\"Event\");",
+              "    pm.expect(json.message).to.include(\"not found\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    }
+  ]
+}
